@@ -39,7 +39,7 @@ Problem:
 
 ---
 
-Solutions:
+**Solutions:**
 
 <li class="fragment">Multiple processes</li>
 <li class="fragment">Use another language</li>
@@ -47,7 +47,7 @@ Solutions:
 
 ---
 
-Problems with workers:
+**Problems with workers:**
 
 <li class="fragment">Slightly different API for each platform</li>
 <li class="fragment">Serialization - crossing execution boundaries</li>
@@ -58,4 +58,4 @@ Problems with workers:
 
 <li class="fragment">Same API for every platform</li>
 <li class="fragment">Supports <code>@effect/schema</code></li>
-<li class="fragment">Steaming</li>
+<li class="fragment">Streaming</li>
