@@ -39,7 +39,7 @@ Problem:
 
 ---
 
-**Solutions:**
+#### Solutions:
 
 <li class="fragment">Multiple processes</li>
 <li class="fragment">Use another language</li>
@@ -47,7 +47,7 @@ Problem:
 
 ---
 
-**Problems with workers:**
+#### Problems with workers:
 
 <li class="fragment">Slightly different API for each platform</li>
 <li class="fragment">Serialization - crossing execution boundaries</li>
@@ -59,3 +59,59 @@ Problem:
 <li class="fragment">Same API for every platform</li>
 <li class="fragment">Supports <code>@effect/schema</code></li>
 <li class="fragment">Streaming</li>
+
+---
+
+#### Defining requests
+
+```typescript [|6|7|8|11-12]
+import { Schema } from "@effect/schema"
+import { Transferable } from "@effect/platform"
+
+export class CropImage extends Schema.TaggedRequest<CropImage>()(
+  "EncodeImage",
+  Schema.never,
+  Transferable.ImageData,
+  { data: Tranferable.ImageData }
+) {}
+
+export const Request = Schema.union(CropImage)
+export type Request = Schema.Schema.To<typeof Request>
+```
+
+---
+
+#### Implementing the worker
+
+```ts [12|6,13||11]
+import type { WorkerError } from "@effect/platform"
+import { WorkerRunner } from "@effect/platform"
+import type { Effect, Layer } from "effect"
+import { Request } from "./schemas.js"
+
+declare const crop: (data: ImageData) => Effect.Effect<ImageData>
+
+export const WorkerRunnerLive: Layer.Layer<
+  never,
+  WorkerError.WorkerError,
+  WorkerRunner.PlatformRunner
+> = WorkerRunner.layerSerialized(Request, {
+  CropImage: (request) => crop(request.data)
+})
+```
+
+---
+
+#### Running the worker
+
+```ts [3|6|9|]
+import { BrowserRuntime, BrowserWorkerRunner } from "@effect/platform-browser"
+import { Layer } from "effect"
+import { WorkerRunnerLive } from "./worker.js"
+
+const MainLive = WorkerRunnerLive.pipe(
+  Layer.provide(BrowserWorkerRunner.layer)
+)
+
+BrowserRuntime.runMain(Layer.launch(MainLive))
+```
