@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "reveal-md slides.md",
+    "start": "pnpm reveal-md slides.md",
     "dev": "pnpm start --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "reveal-md": "^6.0.1"
   }
 }

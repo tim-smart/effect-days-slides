@@ -29,7 +29,7 @@ section.has-light-background h6 {
   --r-heading-letter-spacing: normal;
   --r-heading-text-transform: none;
   --r-heading-text-shadow: none;
-  --r-heading-font-weight: 600;
+  --r-heading-font-weight: 900;
   --r-heading1-text-shadow: none;
   --r-heading1-size: 2.5em;
   --r-heading2-size: 1.6em;
@@ -53,7 +53,7 @@ section.has-light-background h6 {
 .reveal {
   font-family: var(--r-main-font);
   font-size: var(--r-main-font-size);
-  font-weight: normal;
+  font-weight: 200;
   color: var(--r-main-color);
 }
 
@@ -67,6 +67,10 @@ section.has-light-background h6 {
   color: var(--r-selection-color);
   background: var(--r-selection-background-color);
   text-shadow: none;
+}
+
+.reveal .slides {
+  text-align: left;
 }
 
 .reveal .slides section,
@@ -367,7 +371,7 @@ section.has-light-background h6 {
   bottom: 0;
   left: 0;
   position: absolute;
-  width: 20%;
+  width: 15%;
 }
 
 .reveal .r-text-left {
