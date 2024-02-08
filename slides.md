@@ -136,7 +136,7 @@ BrowserRuntime.runMain(Layer.launch(MainLive))
 
 #### Using the worker
 
-```ts [|7-9|10|13-15|]
+```ts [|7-9|10|12-14|]
 import { Worker } from "@effect/platform"
 import { BrowserWorker } from "@effect/platform-browser"
 import { Effect } from "effect"
@@ -146,8 +146,7 @@ Effect.gen(function*(_) {
   const pool = yield* _(Worker.makePoolSerialized<Request>({
     size: navigator.hardwareConcurrency
   }))
-  const crop = (data: ImageData) => pool.executeEffect(new CropImage({ data }))
-  return { crop } as const
+  yield* _(pool.executeEffect(new CropImage({ data: new ImageData(1, 1) })))
 }).pipe(
   Effect.provide(BrowserWorker.layer(
     () => new globalThis.Worker(new URL("./worker.ts", import.meta.url))
