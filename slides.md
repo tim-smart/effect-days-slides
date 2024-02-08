@@ -64,15 +64,15 @@ Problem:
 
 #### Defining requests
 
-```typescript [|6|7|8|11-12]
+```typescript [|5|6|7|8|11-12|]
 import { Schema } from "@effect/schema"
 import { Transferable } from "@effect/platform"
 
 export class CropImage extends Schema.TaggedRequest<CropImage>()(
-  "EncodeImage",
-  Schema.never,
-  Transferable.ImageData,
-  { data: Tranferable.ImageData }
+  "CropImage", // string tag
+  Schema.never, // error schema
+  Transferable.ImageData, // success schema
+  { data: Tranferable.ImageData } // request params
 ) {}
 
 export const Request = Schema.union(CropImage)
@@ -83,7 +83,7 @@ export type Request = Schema.Schema.To<typeof Request>
 
 #### Implementing the worker
 
-```ts [12|6,13||11]
+```ts [|12|6,13||11]
 import type { WorkerError } from "@effect/platform"
 import { WorkerRunner } from "@effect/platform"
 import type { Effect, Layer } from "effect"
@@ -102,9 +102,25 @@ export const WorkerRunnerLive: Layer.Layer<
 
 ---
 
+#### Implementing the worker
+
+```ts []
+import { WorkerRunner } from "@effect/platform"
+import type { Effect, Layer } from "effect"
+import { Request } from "./schemas.js"
+
+declare const crop: (data: ImageData) => Effect.Effect<ImageData>
+
+export const WorkerRunnerLive = WorkerRunner.layerSerialized(Request, {
+  CropImage: (request) => crop(request.data)
+})
+```
+
+---
+
 #### Running the worker
 
-```ts [3|6|9|]
+```ts [|3|6|9|]
 import { BrowserRuntime, BrowserWorkerRunner } from "@effect/platform-browser"
 import { Layer } from "effect"
 import { WorkerRunnerLive } from "./worker.js"
@@ -114,4 +130,27 @@ const MainLive = WorkerRunnerLive.pipe(
 )
 
 BrowserRuntime.runMain(Layer.launch(MainLive))
+```
+
+---
+
+#### Using the worker
+
+```ts [|7-9|10|13-15|]
+import { Worker } from "@effect/platform"
+import { BrowserWorker } from "@effect/platform-browser"
+import { Effect } from "effect"
+import { CropImage, type Request } from "./schemas.js"
+
+Effect.gen(function*(_) {
+  const pool = yield* _(Worker.makePoolSerialized<Request>({
+    size: navigator.hardwareConcurrency
+  }))
+  const crop = (data: ImageData) => pool.executeEffect(new CropImage({ data }))
+  return { crop } as const
+}).pipe(
+  Effect.provide(BrowserWorker.layer(
+    () => new globalThis.Worker(new URL("./worker.ts", import.meta.url))
+  ))
+)
 ```
