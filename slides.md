@@ -39,7 +39,7 @@ Problem:
 
 ---
 
-#### Solutions:
+#### Solutions
 
 <li class="fragment">Multiple processes</li>
 <li class="fragment">Use another language</li>
@@ -49,7 +49,7 @@ Problem:
 
 #### Problems with workers:
 
-<li class="fragment">Slightly different API for each platform</li>
+<li class="fragment">Different API for each platform</li>
 <li class="fragment">Serialization - crossing execution boundaries</li>
 
 ---
@@ -151,5 +151,173 @@ Effect.gen(function*(_) {
   Effect.provide(BrowserWorker.layer(
     () => new globalThis.Worker(new URL("./worker.ts", import.meta.url))
   ))
+)
+```
+
+---
+
+Problem:
+
+### Type safety over network boundaries
+
+---
+
+#### Solutions
+
+<li class="fragment">tRPC</li>
+<li class="fragment">tsrpc</li>
+<li class="fragment">typed-rpc</li>
+<li class="fragment">...</li>
+
+---
+
+### @effect/rpc
+
+<li class="fragment">Built for Effect</li>
+<li class="fragment">Bidirectional schemas with <code>@effect/schema</code></li>
+<li class="fragment">Batching using <code>RequestResolver</code></li>
+<li class="fragment">Response streaming</li>
+
+---
+
+#### Defining requests
+
+```ts
+import { Schema } from "@effect/schema"
+
+export class User extends Schema.Class<User>()({ ... }) {}
+
+export class GetUserById extends Schema.TaggedRequest<GetUserById>()(
+  "GetUserById",
+  Schema.never,
+  User,
+  { id: Schema.number }
+) {}
+```
+
+---
+
+#### Define a Router
+
+```ts
+import { Router, Rpc } from "@effect/rpc"
+import { GetUserById, User } from "./schema.ts"
+
+export const router = Router.make(
+  Rpc.effect(GetUserById, ({ id }) => Effect.succeed(new User({ ... })))
+)
+
+export type Router = typeof router
+```
+
+---
+
+#### Add to http server
+
+```ts
+import { HttpRouter } from "@effect/rpc-http"
+import { HttpServer } from "@effect/platform"
+import { router } from "./router.ts"
+
+HttpServer.router.empty.pipe(
+  HttpServer.router.post("/rpc", HttpRouter.toHttpApp(router))
+)
+```
+
+---
+
+#### Create the client
+
+```ts [|8|10|12|15-16|]
+import { Resolver } from "@effect/rpc"
+import { HttpResolver } from "@effect/rpc-http"
+import { HttpClient } from "@effect/platform"
+import type { Router } from "./router.ts"
+import { GetUserById } from "./schema.ts"
+import { Schedule } from "effect"
+
+const client = HttpResolver.make<Router>(HttpClient.client.fetchOk().pipe(
+  HttpClient.client.mapRequest(
+    HttpClient.request.prependUrl("http://localhost:3000/rpc")
+  ),
+  HttpClient.client.retry(Schedule.exponential(1000))
+))
+
+// make calls
+client(new GetUserById({ id: 123 }))
+```
+
+---
+
+Problem:
+
+### Batching across contexts
+
+<p class="fragment">Also known as the data-loader pattern</p>
+
+---
+
+### @effect/experimental/RequestResolver
+
+---
+
+```ts [|4|5-7|]
+import { dataLoader } from "@effect/experimental/RequestResolver"
+
+Effect.gen(function* (_) {
+  const resolver = HttpResolver.make<Router>(...)
+  const transfomed = yield* _(dataLoader(resolver, {
+    window: "100 millis",
+    maxBatchSize: 1000
+  }))
+})
+```
+
+---
+
+Problem:
+
+### Persistent caching of requests
+
+---
+
+### @effect/experimental/Persistence
+
+<li class="fragment">Built on <code>@effect/schema</code></li>
+<li class="fragment">In-memory adapter</li>
+<li class="fragment"><code>@effect/platform/KeyValueStore</code> adapter</li>
+<li class="fragment">lmdb adapter</li>
+<li class="fragment">more to come...</li>
+
+---
+
+### Defining requests
+
+```ts
+import { Schema } from "@effect/schema"
+
+export class User extends Schema.Class<User>()({ ... }) {}
+
+export class GetUserById extends Schema.TaggedRequest<GetUserById>()(
+  "GetUserById",
+  Schema.never,
+  User,
+  { id: Schema.number }
+) {}
+```
+
+---
+
+### Usage with RequestResolver
+
+```ts [|4|5-7|]
+import { persisted } from "@effect/experimental/RequestResolver"
+import * as Persistence from "@effect/experimental/Persistence"
+
+Effect.gen(function* (_) {
+  const resolver = HttpResolver.make<Router>(...)
+  const persistedResolver = yield* _(persisted(resolver, "store-id"))
+}).pipe(
+  Effect.provide(Persistence.layerResultMemory)
 )
 ```
