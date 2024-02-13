@@ -333,6 +333,7 @@ Problem:
 ### Solutions
 
 - docker + grafana
+- `console.log`
 
 ---
 
@@ -342,6 +343,11 @@ Problem:
 
 ## vscode extension
 
+<li class="fragment">Tracing</li>
+<li class="fragment">Metrics</li>
+<li class="fragment">Inspecting Context</li>
+<li class="fragment">All inside your IDE</li>
+
 ---
 
-Demo
+### Demo
