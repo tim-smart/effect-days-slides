@@ -321,3 +321,27 @@ Effect.gen(function* (_) {
   Effect.provide(Persistence.layerResultMemory)
 )
 ```
+
+---
+
+Problem:
+
+### Observability in development
+
+---
+
+### Solutions
+
+- docker + grafana
+
+---
+
+## Announcing...
+
+---
+
+## vscode extension
+
+---
+
+Demo
