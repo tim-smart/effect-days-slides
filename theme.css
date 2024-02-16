@@ -17,7 +17,7 @@ section.has-light-background h6 {
    * GLOBAL STYLES
    *********************************************/
 :root {
-  --r-background-color: #191919;
+  --r-background-color: #000000;
   --r-main-font: -apple-system, BlinkMacSystemFont, sans-serif;
   --r-main-font-size: 42px;
   --r-main-color: #fff;
@@ -46,7 +46,7 @@ section.has-light-background h6 {
 }
 
 .reveal-viewport {
-  background: #191919;
+  background: #000000;
   background-color: var(--r-background-color);
 }
 

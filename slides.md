@@ -35,7 +35,7 @@ Exploring recent additions to Effect
 
 Problem:
 
-### CPU bound work on a single thread
+### CPU bound work
 
 ---
 
@@ -59,6 +59,7 @@ Problem:
 <li class="fragment">Same API for every platform</li>
 <li class="fragment">Supports <code>@effect/schema</code></li>
 <li class="fragment">Streaming</li>
+<li class="fragment">Tracing</li>
 
 ---
 
@@ -177,6 +178,7 @@ Problem:
 <li class="fragment">Bidirectional schemas with <code>@effect/schema</code></li>
 <li class="fragment">Batching using <code>RequestResolver</code></li>
 <li class="fragment">Response streaming</li>
+<li class="fragment">Tracing</li>
 
 ---
 
@@ -199,7 +201,7 @@ export class GetUserById extends Schema.TaggedRequest<GetUserById>()(
 
 #### Define a Router
 
-```ts
+```ts [|5|]
 import { Router, Rpc } from "@effect/rpc"
 import { GetUserById, User } from "./schema.ts"
 
@@ -228,7 +230,7 @@ HttpServer.router.empty.pipe(
 
 #### Create the client
 
-```ts [|8|10|12|15-16|]
+```ts [|4,8|10|12|13|15-16|]
 import { Resolver } from "@effect/rpc"
 import { HttpResolver } from "@effect/rpc-http"
 import { HttpClient } from "@effect/platform"
@@ -241,7 +243,7 @@ const client = HttpResolver.make<Router>(HttpClient.client.fetchOk().pipe(
     HttpClient.request.prependUrl("http://localhost:3000/rpc")
   ),
   HttpClient.client.retry(Schedule.exponential(1000))
-))
+)).pipe(Resolver.toClient)
 
 // make calls
 client(new GetUserById({ id: 123 }))
@@ -293,8 +295,9 @@ Problem:
 
 ### Defining requests
 
-```ts
+```ts [|12-14]
 import { Schema } from "@effect/schema"
+import { PrimaryKey } from "effect"
 
 export class User extends Schema.Class<User>()({ ... }) {}
 
@@ -303,14 +306,18 @@ export class GetUserById extends Schema.TaggedRequest<GetUserById>()(
   Schema.never,
   User,
   { id: Schema.number }
-) {}
+) {
+  [PrimaryKey.symbol]() {
+    return `GetUserById-${this.id}`
+  }
+}
 ```
 
 ---
 
 ### Usage with RequestResolver
 
-```ts [|4|5-7|]
+```ts [|5|1,6|8|]
 import { persisted } from "@effect/experimental/RequestResolver"
 import * as Persistence from "@effect/experimental/Persistence"
 
@@ -332,12 +339,16 @@ Problem:
 
 ### Solutions
 
-- docker + grafana
-- `console.log`
+<li class="fragment">docker + grafana</li>
+<li class="fragment"><code>console.log</code></li>
 
 ---
 
 ## Announcing...
+
+---
+
+<img width="50%" style="display: block; margin: 0 auto;" src="./images/effect-vscode.png" />
 
 ---
 
