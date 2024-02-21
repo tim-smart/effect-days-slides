@@ -43,7 +43,7 @@ Problem:
 
 <li class="fragment">Multiple processes</li>
 <li class="fragment">Use another language</li>
-<li class="fragment"><span class="fragment highlight-red">Workers</span></li>
+<li class="fragment"><span class="fragment highlight-green">Workers</span></li>
 
 ---
 
@@ -73,10 +73,10 @@ export class CropImage extends Schema.TaggedRequest<CropImage>()(
   "CropImage", // string tag
   Schema.never, // error schema
   Transferable.ImageData, // success schema
-  { data: Tranferable.ImageData } // request params
+  { data: Tranferable.ImageData } // request schema
 ) {}
 
-export const Request = Schema.union(CropImage)
+export const Request = Schema.union(CropImage, ...)
 export type Request = Schema.Schema.To<typeof Request>
 ```
 
@@ -362,3 +362,9 @@ Problem:
 ---
 
 ### Demo
+
+---
+
+# 👋
+
+Come find me if you have questions!
