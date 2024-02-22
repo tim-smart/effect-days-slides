@@ -33,9 +33,11 @@ Exploring recent additions to Effect
 
 ---
 
-Problem:
+Problem 1:
 
 ### CPU bound work
+
+<div class="fragment">Don't block the main JS thread</div>
 
 ---
 
@@ -54,6 +56,10 @@ Problem:
 
 ---
 
+<img width="60%" style="display: block; margin: 0 auto;" src="./images/worker-error.jpeg" />
+
+---
+
 ## @effect/platform/Worker
 
 <li class="fragment">Same API for every platform</li>
@@ -69,9 +75,11 @@ Problem:
 import { Schema } from "@effect/schema"
 import { Transferable } from "@effect/platform"
 
+export class CropImageError extends Schema.TaggedError<CropImageError>()("CropImageError", {}) {}
+
 export class CropImage extends Schema.TaggedRequest<CropImage>()(
   "CropImage", // string tag
-  Schema.never, // error schema
+  CropImageError, // error schema
   Transferable.ImageData, // success schema
   { data: Tranferable.ImageData } // request schema
 ) {}
@@ -105,7 +113,7 @@ export const WorkerRunnerLive: Layer.Layer<
 
 #### Implementing the worker
 
-```ts []
+```ts
 import { WorkerRunner } from "@effect/platform"
 import type { Effect, Layer } from "effect"
 import { Request } from "./schemas.js"
@@ -145,7 +153,7 @@ import { CropImage, type Request } from "./schemas.js"
 
 Effect.gen(function*(_) {
   const pool = yield* _(Worker.makePoolSerialized<Request>({
-    size: navigator.hardwareConcurrency
+    size: 4
   }))
   yield* _(pool.executeEffect(new CropImage({ data: new ImageData(1, 1) })))
 }).pipe(
@@ -157,9 +165,11 @@ Effect.gen(function*(_) {
 
 ---
 
-Problem:
+Problem 2:
 
 ### Type safety over network boundaries
+
+<div class="fragment">Fully type-safe client-to-server communication</div>
 
 ---
 
@@ -251,7 +261,7 @@ client(new GetUserById({ id: 123 }))
 
 ---
 
-Problem:
+Problem 3:
 
 ### Batching across contexts
 
@@ -268,7 +278,7 @@ import { dataLoader } from "@effect/experimental/RequestResolver"
 
 Effect.gen(function* (_) {
   const resolver = HttpResolver.make<Router>(...)
-  const transfomed = yield* _(dataLoader(resolver, {
+  const newResolver = yield* _(dataLoader(resolver, {
     window: "100 millis",
     maxBatchSize: 1000
   }))
@@ -277,9 +287,11 @@ Effect.gen(function* (_) {
 
 ---
 
-Problem:
+Problem 4:
 
 ### Persistent caching of requests
+
+<div class="fragment">Storing request results between app instances</div>
 
 ---
 
@@ -320,26 +332,30 @@ export class GetUserById extends Schema.TaggedRequest<GetUserById>()(
 ```ts [|5|1,6|8|]
 import { persisted } from "@effect/experimental/RequestResolver"
 import * as Persistence from "@effect/experimental/Persistence"
+import { NodeKeyValueStore } from "@effect/platform-node"
 
 Effect.gen(function* (_) {
   const resolver = HttpResolver.make<Router>(...)
   const persistedResolver = yield* _(persisted(resolver, "store-id"))
 }).pipe(
-  Effect.provide(Persistence.layerResultMemory)
+  Effect.provide(Persistence.layerResultKeyValueStore),
+  Effect.provide(NodeKeyValueStore.layerFileSystem("./store"))
 )
 ```
 
 ---
 
-Problem:
+Problem 5:
 
 ### Observability in development
+
+<div class="fragment">Easy tracing & metrics in development</div>
 
 ---
 
 ### Solutions
 
-<li class="fragment">docker + grafana</li>
+<li class="fragment">docker + tempo + prometheus</li>
 <li class="fragment"><code>console.log</code></li>
 
 ---
@@ -358,6 +374,7 @@ Problem:
 <li class="fragment">Metrics</li>
 <li class="fragment">Inspecting Context</li>
 <li class="fragment">All inside your IDE</li>
+<li class="fragment">Early alpha...</li>
 
 ---
 
