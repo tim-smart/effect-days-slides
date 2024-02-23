@@ -71,11 +71,12 @@ Problem 1:
 
 #### Defining requests
 
-```typescript [|5|6|7|8|11-12|]
+```typescript [|8|4-5,9|10|11|14-15|]
 import { Schema } from "@effect/schema"
 import { Transferable } from "@effect/platform"
 
-export class CropImageError extends Schema.TaggedError<CropImageError>()("CropImageError", {}) {}
+export class CropImageError
+  extends Schema.TaggedError<CropImageError>()("CropImageError", {}) {}
 
 export class CropImage extends Schema.TaggedRequest<CropImage>()(
   "CropImage", // string tag
@@ -240,7 +241,22 @@ HttpServer.router.empty.pipe(
 
 #### Create the client
 
-```ts [|4,8|10|12|13|15-16|]
+```ts [|2,5|8|]
+import { HttpResolver } from "@effect/rpc-http"
+import type { Router } from "./router.ts"
+import { GetUserById } from "./schema.ts"
+
+const client = HttpResolver.makeClient<Router>("http://localhost:3000/rpc")
+
+// make calls
+client(new GetUserById({ id: 123 }))
+```
+
+---
+
+#### Create a RequestResolver
+
+```ts [|10|12|]
 import { Resolver } from "@effect/rpc"
 import { HttpResolver } from "@effect/rpc-http"
 import { HttpClient } from "@effect/platform"
@@ -248,7 +264,7 @@ import type { Router } from "./router.ts"
 import { GetUserById } from "./schema.ts"
 import { Schedule } from "effect"
 
-const client = HttpResolver.make<Router>(HttpClient.client.fetchOk().pipe(
+const resolver = HttpResolver.make<Router>(HttpClient.client.fetchOk().pipe(
   HttpClient.client.mapRequest(
     HttpClient.request.prependUrl("http://localhost:3000/rpc")
   ),
@@ -329,7 +345,7 @@ export class GetUserById extends Schema.TaggedRequest<GetUserById>()(
 
 ### Usage with RequestResolver
 
-```ts [|5|1,6|8|]
+```ts [|6|1,7|9-11|]
 import { persisted } from "@effect/experimental/RequestResolver"
 import * as Persistence from "@effect/experimental/Persistence"
 import { NodeKeyValueStore } from "@effect/platform-node"
@@ -338,8 +354,9 @@ Effect.gen(function* (_) {
   const resolver = HttpResolver.make<Router>(...)
   const persistedResolver = yield* _(persisted(resolver, "store-id"))
 }).pipe(
-  Effect.provide(Persistence.layerResultKeyValueStore),
-  Effect.provide(NodeKeyValueStore.layerFileSystem("./store"))
+  Effect.provide(Persistence.layerResultKeyValueStore.pipe(
+    Layer.provide(NodeKeyValueStore.layerFileSystem("./store"))
+  ))
 )
 ```
 
