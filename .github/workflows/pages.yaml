@@ -1,0 +1,26 @@
+name: Build and Deploy
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Install and Build 🔧
+        run: |
+          pnpm install
+          mkdir build
+          cp -r assets build/
+          touch build/.nojekyll
+          ./node_modules/.bin/reveal-md --preprocessor ../../../preprocess.js --static build slides.md
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: build
