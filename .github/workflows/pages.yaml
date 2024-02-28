@@ -21,7 +21,7 @@ jobs:
         run: |
           pnpm install
           mkdir build
-          cp -r assets build/
+          cp -r images build/
           touch build/.nojekyll
           ./node_modules/.bin/reveal-md --preprocessor ../../../preprocess.js --static build slides.md
       - name: Deploy 🚀
